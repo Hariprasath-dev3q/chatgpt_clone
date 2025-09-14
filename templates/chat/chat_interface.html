@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if thread %}{{ thread.title }}{% else %}New Chat{% endif %} - ChatGPT Clone{% endblock %}
+
+{% block content %}
+<div class="flex h-screen bg-gray-50">
+    <!-- Sidebar -->
+    <div class="w-64 bg-gray-900 text-white flex flex-col">
+        <div class="p-4 border-b border-gray-700">
+            <button onclick="newChat()" 
+                    class="w-full bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded text-left">
+                + New Chat
+            </button>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto">
+            {% for chat_thread in threads %}
+                <div class="p-2 hover:bg-gray-700 cursor-pointer border-b border-gray-800 {% if thread and thread.id == chat_thread.id %}bg-gray-700{% endif %}"
+                     onclick="window.location.href='{% url 'chat_interface' chat_thread.id %}'">
+                    <div class="flex justify-between items-center">
+                        <div class="flex-1">
+                            <p class="text-sm truncate">{{ chat_thread.get_preview }}</p>
+                            <p class="text-xs text-gray-400">{{ chat_thread.updated_at|date:"M d, Y" }}</p>
+                        </div>
+                        <button onclick="deleteThread({{ chat_thread.id }}, event)" 
+                                class="text-red-400 hover:text-red-300 ml-2">
+                            ×
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <div class="p-4 border-t border-gray-700">
+            <div class="text-sm text-gray-300">{{ user.username }}</div>
+            <a href="{% url 'logout' %}" class="text-xs text-gray-400 hover:text-gray-200">Logout</a>
+        </div>
+    </div>
+
+    <!-- Main Chat Area -->
+    <div class="flex-1 flex flex-col">
+        <div class="flex-1 overflow-y-auto p-4" id="chat-container">
+            {% for message in messages %}
+                <div class="mb-4 {% if message.is_user %}text-right{% else %}text-left{% endif %}">
+                    <div class="inline-block max-w-3xl p-3 rounded-lg {% if message.is_user %}bg-blue-500 text-white{% else %}bg-white text-gray-800 shadow{% endif %}">
+                        <p class="whitespace-pre-wrap">{{ message.content }}</p>
+                        <p class="text-xs mt-1 {% if message.is_user %}text-blue-100{% else %}text-gray-500{% endif %}">
+                            {{ message.timestamp|date:"M d, H:i" }}
+                        </p>
+                    </div>
+                </div>
+            {% endfor %}
+            <div id="typing-indicator" class="hidden mb-4">
+                <div class="inline-block bg-gray-200 p-3 rounded-lg">
+                    <div class="flex space-x-1">
+                        <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
+                        <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                        <div class="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Message Input -->
+        <div class="border-t bg-white p-4">
+            <div class="flex space-x-2">
+                <input type="text" 
+                       id="message-input" 
+                       placeholder="Type your message..."
+                       class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()" 
+                        class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors">
+                    Send
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const currentThreadId = {% if thread %}{{ thread.id }}{% else %}null{% endif %};
+</script>
+{% endblock %}
